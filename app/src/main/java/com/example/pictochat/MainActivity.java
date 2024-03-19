@@ -24,7 +24,7 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity{
 
     //Init empty variables
-    Button btnOnOff, btnDiscover, btnSend;
+    Button btnOnOff, btnDiscover, btnSend; // :)
     ListView listView;
     TextView read_msg_box, connectionStatus;
     EditText writeMsg;
