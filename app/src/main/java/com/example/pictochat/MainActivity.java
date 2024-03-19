@@ -9,6 +9,7 @@ import android.net.wifi.p2p.WifiP2pDeviceList;
 import android.net.wifi.p2p.WifiP2pInfo;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -76,6 +77,7 @@ public class MainActivity extends AppCompatActivity{
                     @Override
                     public void onFailure(int reason) {
                         connectionStatus.setText("Discovery Starting Failed");
+                        Log.d("discoverFail", String.valueOf(reason));
                     }
                 });
             }
