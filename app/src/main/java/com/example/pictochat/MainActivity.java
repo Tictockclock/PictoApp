@@ -15,6 +15,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 public class MainActivity extends AppCompatActivity{
 
+    //Init empty variables
     Button btnOnOff, btnDiscover, btnSend;
     ListView listView;
     TextView read_msg_box, connectionStatus;
