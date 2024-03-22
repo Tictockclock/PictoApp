@@ -26,6 +26,7 @@ import androidx.core.app.ActivityCompat;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -222,6 +223,27 @@ public class MainActivity extends AppCompatActivity {
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
+        }
+    }
+
+    public class ClientClass extends Thread{
+        Socket socket;
+        String hostAdd;
+
+        @Override
+        public void run() {
+            try {
+                socket.connect(new InetSocketAddress(hostAdd,8888),500);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        public ClientClass(InetAddress hostAddress){
+            hostAdd = hostAddress.getHostAddress();
+            socket = new Socket();
+
+
         }
     }
 }
