@@ -10,6 +10,8 @@ import android.net.wifi.p2p.WifiP2pDeviceList;
 import android.net.wifi.p2p.WifiP2pInfo;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
@@ -21,6 +23,7 @@ import android.widget.TextView;
 import android.net.wifi.WifiManager;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
@@ -47,6 +50,7 @@ public class MainActivity extends AppCompatActivity {
     List<WifiP2pDevice> peers = new ArrayList<WifiP2pDevice>();
     String[] deviceNameArray;
     WifiP2pDevice[] deviceArray;
+    static final int MESSAGE_READ = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,6 +60,12 @@ public class MainActivity extends AppCompatActivity {
         exqListener();
     }
 
+    Handler handler = new Handler(new Handler.Callback(){
+        @Override
+        public boolean handleMessage(Message message) {
+            return true;
+        }
+    });
     private void exqListener() { //listens for button presses
         btnOnOff.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -211,7 +221,6 @@ public class MainActivity extends AppCompatActivity {
         super.onPause();
         unregisterReceiver(mReceiver);
     }
-    //Class for managing server thread for data transfer
     public class ServerClass extends Thread{
         Socket socket;
         ServerSocket serverSocket;
