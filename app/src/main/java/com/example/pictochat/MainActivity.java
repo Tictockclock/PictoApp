@@ -3,6 +3,7 @@ package com.example.pictochat;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.net.wifi.p2p.WifiP2pConfig;
 import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pDeviceList;
@@ -21,12 +22,16 @@ import android.net.wifi.WifiManager;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 
+import java.io.IOException;
 import java.net.InetAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity{
+public class MainActivity extends AppCompatActivity {
 
     //Init empty variables
     Button btnOnOff, btnDiscover, btnSend; // :)
@@ -41,8 +46,9 @@ public class MainActivity extends AppCompatActivity{
     List<WifiP2pDevice> peers = new ArrayList<WifiP2pDevice>();
     String[] deviceNameArray;
     WifiP2pDevice[] deviceArray;
+
     @Override
-    protected void onCreate(Bundle savedInstanceState){
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         initialWork();
@@ -53,21 +59,29 @@ public class MainActivity extends AppCompatActivity{
         btnOnOff.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) { //Toggle wifi button
-                if(wifiManager.isWifiEnabled())
-                {
+                if (wifiManager.isWifiEnabled()) {
                     wifiManager.setWifiEnabled(false);
                     btnOnOff.setText("Turn ON WiFI");
-                }
-                else {
+                } else {
                     wifiManager.setWifiEnabled(true);
                     btnOnOff.setText("Turn OFF WiFi");
                 }
             }
         });
 
-        btnDiscover.setOnClickListener(new View.OnClickListener(){ //Discover new peers button
+        btnDiscover.setOnClickListener(new View.OnClickListener() { //Discover new peers button
             @Override
-            public void onClick(View view){
+            public void onClick(View view) {
+                if (ActivityCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED || ActivityCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.NEARBY_WIFI_DEVICES) != PackageManager.PERMISSION_GRANTED) {
+                    // TODO: Consider calling
+                    //    ActivityCompat#requestPermissions
+                    // here to request the missing permissions, and then overriding
+                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                    //                                          int[] grantResults)
+                    // to handle the case where the user grants the permission. See the documentation
+                    // for ActivityCompat#requestPermissions for more details.
+                    return;
+                }
                 mManager.discoverPeers(mChannel, new WifiP2pManager.ActionListener() {
                     @Override
                     public void onSuccess() {
@@ -89,6 +103,16 @@ public class MainActivity extends AppCompatActivity{
                 final WifiP2pDevice device = deviceArray[i];
                 WifiP2pConfig config = new WifiP2pConfig();
                 config.deviceAddress = device.deviceAddress;
+                if (ActivityCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED || ActivityCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.NEARBY_WIFI_DEVICES) != PackageManager.PERMISSION_GRANTED) {
+                    // TODO: Consider calling
+                    //    ActivityCompat#requestPermissions
+                    // here to request the missing permissions, and then overriding
+                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                    //                                          int[] grantResults)
+                    // to handle the case where the user grants the permission. See the documentation
+                    // for ActivityCompat#requestPermissions for more details.
+                    return;
+                }
                 mManager.connect(mChannel, config, new WifiP2pManager.ActionListener() {
                     @Override
                     public void onSuccess() {
@@ -185,5 +209,19 @@ public class MainActivity extends AppCompatActivity{
     protected void onPause() {
         super.onPause();
         unregisterReceiver(mReceiver);
+    }
+    //Class for managing server thread for data transfer
+    public class ServerClass extends Thread{
+        Socket socket;
+        ServerSocket serverSocket;
+        @Override
+        public void run(){
+            try {
+                serverSocket = new ServerSocket(8888);
+                socket = serverSocket.accept();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 }
