@@ -155,7 +155,9 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 String msg = writeMsg.getText().toString();
-                sendReceive.write(msg.getBytes());
+                if (sendReceive != null) { //Check if its null, if it is it will crash without check
+                    sendReceive.write(msg.getBytes());
+                }
             }
         });
     }
