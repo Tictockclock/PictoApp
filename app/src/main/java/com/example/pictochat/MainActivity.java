@@ -1,5 +1,6 @@
 package com.example.pictochat;
 
+import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.IntentFilter;
@@ -58,6 +59,8 @@ public class MainActivity extends AppCompatActivity {
     ClientClass clientClass;
     SendReceive sendReceive;
 
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -97,15 +100,13 @@ public class MainActivity extends AppCompatActivity {
         btnDiscover.setOnClickListener(new View.OnClickListener() { //Discover new peers button
             @Override
             public void onClick(View view) {
-                if (ActivityCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED || ActivityCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.NEARBY_WIFI_DEVICES) != PackageManager.PERMISSION_GRANTED) {
-                    // TODO: Consider calling
-                    //    ActivityCompat#requestPermissions
-                    // here to request the missing permissions, and then overriding
-                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                    //                                          int[] grantResults)
-                    // to handle the case where the user grants the permission. See the documentation
-                    // for ActivityCompat#requestPermissions for more details.
-                    return;
+                if (ActivityCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                    Log.d("test discover", "No Fine Location Permissions");
+                    ActivityCompat.requestPermissions((Activity) getApplicationContext(), new String[] { android.Manifest.permission.ACCESS_FINE_LOCATION }, 0);
+                }
+                if (ActivityCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.NEARBY_WIFI_DEVICES) != PackageManager.PERMISSION_GRANTED) {
+                    Log.d("test discover", "No Nearby Wifi Device Permissions");
+                    ActivityCompat.requestPermissions((Activity) getApplicationContext(), new String[] { android.Manifest.permission.NEARBY_WIFI_DEVICES }, 1);
                 }
                 mManager.discoverPeers(mChannel, new WifiP2pManager.ActionListener() {
                     @Override
