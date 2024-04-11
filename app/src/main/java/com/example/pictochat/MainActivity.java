@@ -13,6 +13,7 @@ import android.net.wifi.p2p.WifiP2pManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.os.StrictMode;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
@@ -58,6 +59,10 @@ public class MainActivity extends AppCompatActivity {
     ServerClass serverClass;
     ClientClass clientClass;
     SendReceive sendReceive;
+    StrictMode.ThreadPolicy policy;
+    {
+        policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+    }
 
 
 
