@@ -102,11 +102,11 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View view) {
                 if (ActivityCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                     Log.d("test discover", "No Fine Location Permissions");
-                    ActivityCompat.requestPermissions((Activity) getApplicationContext(), new String[] { android.Manifest.permission.ACCESS_FINE_LOCATION }, 0);
+                    ActivityCompat.requestPermissions(MainActivity.this, new String[] { android.Manifest.permission.ACCESS_FINE_LOCATION }, 0);
                 }
                 if (ActivityCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.NEARBY_WIFI_DEVICES) != PackageManager.PERMISSION_GRANTED) {
                     Log.d("test discover", "No Nearby Wifi Device Permissions");
-                    ActivityCompat.requestPermissions((Activity) getApplicationContext(), new String[] { android.Manifest.permission.NEARBY_WIFI_DEVICES }, 1);
+                    ActivityCompat.requestPermissions(MainActivity.this, new String[] { android.Manifest.permission.NEARBY_WIFI_DEVICES }, 1);
                 }
                 mManager.discoverPeers(mChannel, new WifiP2pManager.ActionListener() {
                     @Override
