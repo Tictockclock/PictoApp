@@ -30,20 +30,19 @@
         android:layout_alignParentStart="true"
         android:layout_below="@+id/onOff"
         android:layout_marginTop="25dp"
-        android:background="@android:color/holo_orange_light" />
+        android:background="@android:color/holo_purple" />
 
-    <TextView
+    <ListView
         android:id="@+id/readMsg"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentEnd="true"
-        android:layout_alignParentStart="true"
+        android:layout_above="@+id/writeMsg"
         android:layout_below="@+id/peerListView"
-        android:layout_marginTop="31dp"
-        android:text="Message"
-        android:textAlignment="center"
-        android:textSize="20sp"
-        android:textStyle="italic" />
+        android:layout_alignParentStart="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginTop="12dp"
+        android:layout_marginBottom="12dp"
+        android:layout_marginHorizontal="10dp"/>
 
     <EditText
         android:id="@+id/writeMsg"

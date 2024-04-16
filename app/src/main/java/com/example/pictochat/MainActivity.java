@@ -43,8 +43,8 @@ public class MainActivity extends AppCompatActivity {
 
     //Init empty variables
     Button btnOnOff, btnDiscover, btnSend; // :)
-    ListView listView;
-    TextView read_msg_box, connectionStatus;
+    ListView listView, read_msg_box;
+    TextView connectionStatus;
     EditText writeMsg;
     WifiManager wifiManager;
     WifiP2pManager mManager;
@@ -53,6 +53,8 @@ public class MainActivity extends AppCompatActivity {
     IntentFilter mIntentFilter;
     List<WifiP2pDevice> peers = new ArrayList<WifiP2pDevice>();
     String[] deviceNameArray;
+    String[] messageArray;
+    int messageArraySize = 15;
     WifiP2pDevice[] deviceArray;
     static final int MESSAGE_READ = 1;
 
@@ -83,7 +85,7 @@ public class MainActivity extends AppCompatActivity {
                 case MESSAGE_READ:
                     byte[] readBuff = (byte[]) msg.obj;
                     String tempMsg = new String(readBuff, 0, msg.arg1);
-                    read_msg_box.setText(tempMsg);
+                    ChangeMessagesList(tempMsg);
                     break;
 
             }
@@ -162,6 +164,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 String msg = writeMsg.getText().toString();
+                ChangeMessagesList(msg);
                 sendReceive.write(msg.getBytes());
                 writeMsg.getText().clear();
                 
@@ -177,6 +180,12 @@ public class MainActivity extends AppCompatActivity {
         read_msg_box = findViewById(R.id.readMsg);
         connectionStatus = findViewById(R.id.connectionStatus);
         writeMsg = findViewById(R.id.writeMsg);
+
+        messageArray = new String[messageArraySize];
+        for(int i=0; i<messageArraySize; i++)
+        {
+            messageArray[i] = "";
+        }
 
         wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
 
@@ -339,5 +348,15 @@ public class MainActivity extends AppCompatActivity {
 
 
         }
+    }
+
+    private void ChangeMessagesList(String msg){
+        for (int i = messageArraySize-1; i>0; i--)
+        {
+            messageArray[i] = messageArray[i-1];
+        }
+        messageArray[0] = msg;
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(getApplicationContext(), R.layout.text_white_text, messageArray);
+        read_msg_box.setAdapter(adapter);
     }
 }
