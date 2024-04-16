@@ -163,6 +163,8 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 String msg = writeMsg.getText().toString();
                 sendReceive.write(msg.getBytes());
+                writeMsg.getText().clear();
+                
             }
         });
     }
