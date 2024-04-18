@@ -165,7 +165,12 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 String msg = writeMsg.getText().toString();
                 ChangeMessagesList(msg);
-                sendReceive.write(msg.getBytes());
+                if (sendReceive != null) {
+                    sendReceive.write(msg.getBytes());
+                }
+                else {
+                    Toast.makeText(getApplicationContext(), "No Connected Device", Toast.LENGTH_SHORT).show();
+                }
                 writeMsg.getText().clear();
                 
             }
@@ -320,8 +325,6 @@ public class MainActivity extends AppCompatActivity {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-
-
         }
 
 
