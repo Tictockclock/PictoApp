@@ -54,7 +54,7 @@ public class MainActivity extends AppCompatActivity {
     List<WifiP2pDevice> peers = new ArrayList<WifiP2pDevice>();
     String[] deviceNameArray;
     String[] messageArray;
-    int messageArraySize = 15;
+    int messageArraySize = 0;
     WifiP2pDevice[] deviceArray;
     static final int MESSAGE_READ = 1;
 
@@ -187,10 +187,6 @@ public class MainActivity extends AppCompatActivity {
         writeMsg = findViewById(R.id.writeMsg);
 
         messageArray = new String[messageArraySize];
-        for(int i=0; i<messageArraySize; i++)
-        {
-            messageArray[i] = "";
-        }
 
         wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
 
@@ -354,12 +350,20 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void ChangeMessagesList(String msg){
-        for (int i = messageArraySize-1; i>0; i--)
+        messageArraySize++;
+        String[] tempArray = new String[messageArraySize];
+        for (int i=0; i < messageArraySize-1; i++)
         {
-            messageArray[i] = messageArray[i-1];
+            tempArray[i] = messageArray[i];
         }
-        messageArray[0] = msg;
+        tempArray[messageArraySize-1] = msg;
+        messageArray = new String[messageArraySize];
+        for (int i=0; i < messageArraySize; i++)
+        {
+            messageArray[i] = tempArray[i];
+        }
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(getApplicationContext(), R.layout.text_white_text, messageArray);
         read_msg_box.setAdapter(adapter);
+        read_msg_box.setSelection(adapter.getCount() - 1);
     }
 }
