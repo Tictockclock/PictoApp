@@ -152,6 +152,8 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onSuccess() {
                         Toast.makeText(getApplicationContext(), "Connected to " + device.deviceName, Toast.LENGTH_SHORT).show();
+                        //setContentView(getResources().getIdentifier("connectedview", "layout", getPackageName()));
+
                     }
 
                     @Override
@@ -242,6 +244,7 @@ public class MainActivity extends AppCompatActivity {
     WifiP2pManager.ConnectionInfoListener connectionInfoListener = new WifiP2pManager.ConnectionInfoListener() {
         @Override
         public void onConnectionInfoAvailable(WifiP2pInfo wifiP2pInfo) {
+
             final InetAddress groupOwnerAddress = wifiP2pInfo.groupOwnerAddress;
 
             if(wifiP2pInfo.groupFormed && wifiP2pInfo.isGroupOwner) {
