@@ -164,9 +164,9 @@ public class MainActivity extends AppCompatActivity {
         btnSend.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String msg = writeMsg.getText().toString();
+                String msg = userName.getText().toString() + ": " + writeMsg.getText().toString();
 
-                ChangeMessagesList(userName.getText().toString() + ": " + msg);
+                ChangeMessagesList(msg);
                 if (sendReceive != null) {
                     sendReceive.write(msg.getBytes());
                 }
