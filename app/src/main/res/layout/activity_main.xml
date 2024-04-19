@@ -30,7 +30,7 @@
         android:layout_below="@+id/displayName"
         android:layout_alignParentStart="true"
         android:layout_marginTop="12dp"
-        android:background="#F8C8DC" />
+        android:background="#A17B8B" />
 
     <ListView
         android:id="@+id/readMsg"
@@ -86,9 +86,9 @@
         android:layout_above="@+id/peerListView"
         android:layout_below="@+id/onOff"
         android:layout_marginStart="28dp"
-        android:layout_marginTop="12dp"
-        android:text="Display Name:"
-        android:textSize="18sp" />
+        android:layout_marginTop="20dp"
+        android:text="Display Name: "
+        android:textSize="20sp" />
 
     <EditText
         android:id="@+id/displayName"
@@ -103,5 +103,5 @@
         android:background="#D8BFD8"
         android:ems="10"
         android:inputType="textPersonName"
-        android:text="Anonymous"/>
+        android:text="  Anonymous" />
 </RelativeLayout>
