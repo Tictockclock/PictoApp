@@ -46,6 +46,7 @@ public class MainActivity extends AppCompatActivity {
     ListView listView, read_msg_box;
     TextView connectionStatus;
     EditText writeMsg;
+    EditText userName;
     WifiManager wifiManager;
     WifiP2pManager mManager;
     WifiP2pManager.Channel mChannel;
@@ -164,7 +165,8 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 String msg = writeMsg.getText().toString();
-                ChangeMessagesList(msg);
+
+                ChangeMessagesList(userName.getText().toString() + ": " + msg);
                 if (sendReceive != null) {
                     sendReceive.write(msg.getBytes());
                 }
@@ -185,6 +187,7 @@ public class MainActivity extends AppCompatActivity {
         read_msg_box = findViewById(R.id.readMsg);
         connectionStatus = findViewById(R.id.connectionStatus);
         writeMsg = findViewById(R.id.writeMsg);
+        userName = findViewById(R.id.displayName);
 
         messageArray = new String[messageArraySize];
 
