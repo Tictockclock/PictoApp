@@ -36,8 +36,21 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.security.InvalidKeyException;
+import java.security.Key;
+import java.security.KeyFactory;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.X509EncodedKeySpec;
 import java.util.ArrayList;
 import java.util.List;
+
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -67,6 +80,11 @@ public class MainActivity extends AppCompatActivity {
         policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
     }
 
+    KeyPairGenerator kpg;
+    KeyPair kp;
+    Key publicKey, privateKey, connectedDevicePublicKey;
+    Cipher cipher;
+
 
 
     @Override
@@ -84,11 +102,17 @@ public class MainActivity extends AppCompatActivity {
         public boolean handleMessage(Message msg) {
             switch (msg.what){
                 case MESSAGE_READ:
-                    byte[] readBuff = (byte[]) msg.obj;
-                    String tempMsg = new String(readBuff, 0, msg.arg1);
-                    ChangeMessagesList(tempMsg);
-                    break;
-
+                    if(connectedDevicePublicKey == null) {
+                        byte[] readBuff = (byte[]) msg.obj;
+                        receivePublicKey(readBuff);
+                        break;
+                    }
+                    else {
+                        byte[] readBuff = decryptData((byte[]) msg.obj);
+                        String tempMsg = new String(readBuff, 0);
+                        ChangeMessagesList(tempMsg);
+                        break;
+                    }
             }
             return true;
         }
@@ -168,18 +192,19 @@ public class MainActivity extends AppCompatActivity {
 
                 ChangeMessagesList(msg);
                 if (sendReceive != null) {
-                    sendReceive.write(msg.getBytes());
+                    sendReceive.write(encryptData(msg.getBytes()));
                 }
                 else {
                     Toast.makeText(getApplicationContext(), "No Connected Device", Toast.LENGTH_SHORT).show();
                 }
                 writeMsg.getText().clear();
-                
+
             }
         });
     }
 
-    private void initialWork() { //initialize variables
+    private void initialWork() {
+        //Initialize XML element variables
         btnOnOff = findViewById(R.id.onOff);
         btnDiscover = findViewById(R.id.discover);
         btnSend = findViewById(R.id.sendButton);
@@ -189,6 +214,7 @@ public class MainActivity extends AppCompatActivity {
         writeMsg = findViewById(R.id.writeMsg);
         userName = findViewById(R.id.displayName);
 
+        //Initialize other variables
         messageArray = new String[messageArraySize];
 
         wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
@@ -203,6 +229,24 @@ public class MainActivity extends AppCompatActivity {
         mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION);
         mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION);
         mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION);
+
+        //Initialize Security variables, generate public and private key
+        try {
+            kpg = KeyPairGenerator.getInstance("RSA");
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
+        kpg.initialize(2048);
+        kp = kpg.genKeyPair();
+        publicKey = kp.getPublic();
+        privateKey = kp.getPrivate();
+        try {
+            cipher = Cipher.getInstance("RSA");
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        } catch (NoSuchPaddingException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     WifiP2pManager.PeerListListener peerListListener = new WifiP2pManager.PeerListListener() {
@@ -279,6 +323,7 @@ public class MainActivity extends AppCompatActivity {
                 socket = serverSocket.accept();
                 sendReceive = new SendReceive(socket);
                 sendReceive.start();
+                sendPublicKey();
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -339,6 +384,7 @@ public class MainActivity extends AppCompatActivity {
                 socket.connect(new InetSocketAddress(hostAdd,8888),500);
                 sendReceive = new SendReceive(socket);
                 sendReceive.start();
+                sendPublicKey();
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -368,5 +414,78 @@ public class MainActivity extends AppCompatActivity {
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(getApplicationContext(), R.layout.text_white_text, messageArray);
         read_msg_box.setAdapter(adapter);
         read_msg_box.setSelection(adapter.getCount() - 1);
+    }
+
+    private byte[] encryptData(byte[] data)
+    {
+        Log.d("test unencrypted bytes size", "bytesToSend size: " + data.length);
+        Log.d("test unencrypted bytes", new String(data, 0));
+        try {
+            cipher.init(Cipher.ENCRYPT_MODE, connectedDevicePublicKey);
+        } catch (InvalidKeyException e) {
+            throw new RuntimeException(e);
+        }
+        byte[] bytesToSend;
+        try {
+            bytesToSend = cipher.doFinal(data);
+        } catch (BadPaddingException e) {
+            throw new RuntimeException(e);
+        } catch (IllegalBlockSizeException e) {
+            throw new RuntimeException(e);
+        }
+        Log.d("test RSA bytes size", "bytesToSend size: " + bytesToSend.length);
+        Log.d("test RSA bytes", new String(bytesToSend, 0));
+        return bytesToSend;
+    }
+
+    private byte[] decryptData(byte[] bytesReceived)
+    {
+        byte[] temp = new byte[256];
+        System.arraycopy(bytesReceived, 0, temp, 0, 256);
+        Log.d("test RSA bytes size", "bytesReceived size: " + temp.length);
+        Log.d("test RSA bytes", new String(temp, 0));
+        try {
+            cipher.init(Cipher.DECRYPT_MODE, privateKey);
+
+        } catch (InvalidKeyException e) {
+            throw new RuntimeException(e);
+        }
+        byte[] decrypted;
+        try {
+            decrypted = cipher.doFinal(temp);
+        } catch (BadPaddingException e) {
+            throw new RuntimeException(e);
+        } catch (IllegalBlockSizeException e) {
+            throw new RuntimeException(e);
+        }
+        Log.d("test unencrypted bytes size", "bytesToSend size: " + decrypted.length);
+        Log.d("test unencrypted bytes", new String(decrypted, 0));
+        return decrypted;
+    }
+
+    private void sendPublicKey()
+    {
+    //        if(publicKey == null)
+    //        {
+    //            Log.d("test public key", "publicKey is null");
+    //        }
+    //        if(sendReceive == null)
+    //        {
+    //            Log.d("test public key", "sendReceive is null");
+    //        }
+        sendReceive.write(publicKey.getEncoded());
+    }
+
+    private void receivePublicKey(byte[] bytes)
+    {
+        String tempString = new String(bytes, 0);
+        Log.d("test public key", tempString);
+        try {
+            connectedDevicePublicKey = KeyFactory.getInstance("RSA").generatePublic(new X509EncodedKeySpec(bytes));
+        } catch (InvalidKeySpecException e) {
+            throw new RuntimeException(e);
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
