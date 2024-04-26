@@ -84,29 +84,33 @@ public class MainActivity extends AppCompatActivity {
     KeyPair kp;
     Key publicKey, privateKey, connectedDevicePublicKey;
     Cipher cipher;
+    // End of Variable Declaration
 
 
-
-    @Override
+    @Override //Functions to run at startup including initializing object instances and setting up button press listeners
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         initialWork();
         exqListener();
+        //Turning off strict mode to allow network communication code in main activity
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
     }
 
+    //New message handler function
     Handler handler = new Handler(new Handler.Callback(){
         @Override
         public boolean handleMessage(Message msg) {
             switch (msg.what){
                 case MESSAGE_READ:
+                    //If no stored public key from connected device, 1st message is the public key
                     if(connectedDevicePublicKey == null) {
                         byte[] readBuff = (byte[]) msg.obj;
                         receivePublicKey(readBuff);
                         break;
                     }
+                    //Else read byte data, decrypt, and add to message history
                     else {
                         byte[] readBuff = decryptData((byte[]) msg.obj);
                         String tempMsg = new String(readBuff, 0);
@@ -134,6 +138,7 @@ public class MainActivity extends AppCompatActivity {
         btnDiscover.setOnClickListener(new View.OnClickListener() { //Discover new peers button
             @Override
             public void onClick(View view) {
+                //If required permissions are missing request permission
                 if (ActivityCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                     Log.d("test discover", "No Fine Location Permissions");
                     ActivityCompat.requestPermissions(MainActivity.this, new String[] { android.Manifest.permission.ACCESS_FINE_LOCATION }, 0);
@@ -142,27 +147,32 @@ public class MainActivity extends AppCompatActivity {
                     Log.d("test discover", "No Nearby Wifi Device Permissions");
                     ActivityCompat.requestPermissions(MainActivity.this, new String[] { android.Manifest.permission.NEARBY_WIFI_DEVICES }, 1);
                 }
+                //Listen for available devices
                 mManager.discoverPeers(mChannel, new WifiP2pManager.ActionListener() {
-                    @Override
+                    @Override //Successfully able to listen to peers
                     public void onSuccess() {
                         connectionStatus.setText("Discovery Started");
                     }
 
-                    @Override
+                    @Override //Unable to listen for peers (usually permissions missing or wifip2p not supported)
                     public void onFailure(int reason) {
                         connectionStatus.setText("Discovery Starting Failed");
+                        //On fail log reason to debug window
                         Log.d("discoverFail", String.valueOf(reason));
                     }
                 });
             }
         });
 
-        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() { //Listen for selection of device from available devices
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                //Configure WifiP2pDevice and set device address
                 final WifiP2pDevice device = deviceArray[i];
                 WifiP2pConfig config = new WifiP2pConfig();
                 config.deviceAddress = device.deviceAddress;
+
+                //If missing permissions request them
                 if (ActivityCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                     Log.d("test connect", "no access fine location permission");
                     ActivityCompat.requestPermissions(MainActivity.this, new String[] { android.Manifest.permission.ACCESS_FINE_LOCATION }, 0);
@@ -172,31 +182,36 @@ public class MainActivity extends AppCompatActivity {
                     Log.d("test connect", "no access fine location permission");
                     ActivityCompat.requestPermissions(MainActivity.this, new String[] { android.Manifest.permission.NEARBY_WIFI_DEVICES }, 1);
                 }
+                //Connect to selected device
                 mManager.connect(mChannel, config, new WifiP2pManager.ActionListener() {
                     @Override
-                    public void onSuccess() {
+                    public void onSuccess() { //On success display connected device name
                         Toast.makeText(getApplicationContext(), "Connected to " + device.deviceName, Toast.LENGTH_SHORT).show();
                     }
 
                     @Override
-                    public void onFailure(int reason) {
+                    public void onFailure(int reason) { //On fail
                         Toast.makeText(getApplicationContext(), "Not Connected", Toast.LENGTH_SHORT).show();
                     }
                 });
             }
         });
-        btnSend.setOnClickListener(new View.OnClickListener() {
+        btnSend.setOnClickListener(new View.OnClickListener() { //Listener for message send button
             @Override
             public void onClick(View v) {
+                //Get message text from EditText field, append user name to beginning
                 String msg = userName.getText().toString() + ": " + writeMsg.getText().toString();
-
+                //Add message to local chat history
                 ChangeMessagesList(msg);
+                //If connected to device encrypt using public key and send to message write handler
                 if (sendReceive != null) {
                     sendReceive.write(encryptData(msg.getBytes()));
                 }
+                //No connected device, save chat to local history
                 else {
                     Toast.makeText(getApplicationContext(), "No Connected Device", Toast.LENGTH_SHORT).show();
                 }
+                //Clear edit text field
                 writeMsg.getText().clear();
 
             }
@@ -249,6 +264,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    //Detects changes to list of available peers when device discovery is on, updates list of devices
     WifiP2pManager.PeerListListener peerListListener = new WifiP2pManager.PeerListListener() {
         @Override
         public void onPeersAvailable(WifiP2pDeviceList peerList) {
@@ -271,6 +287,7 @@ public class MainActivity extends AppCompatActivity {
                 }
 
                 ArrayAdapter<String> adapter = new ArrayAdapter<String>(getApplicationContext(), android.R.layout.simple_list_item_1, deviceNameArray);
+                //update xml list with new list of peers
                 listView.setAdapter(adapter);
             }
 
@@ -283,16 +300,19 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
+    //On device connection sets device to server or client based on WiFiP2p group owner
     WifiP2pManager.ConnectionInfoListener connectionInfoListener = new WifiP2pManager.ConnectionInfoListener() {
         @Override
         public void onConnectionInfoAvailable(WifiP2pInfo wifiP2pInfo) {
             final InetAddress groupOwnerAddress = wifiP2pInfo.groupOwnerAddress;
 
+            //If group owner set device as server and start server thread
             if(wifiP2pInfo.groupFormed && wifiP2pInfo.isGroupOwner) {
                 connectionStatus.setText("Host");
                 serverClass = new ServerClass();
                 serverClass.start();
             }
+            //If not group owner set device as client and start client thread
             else if (wifiP2pInfo.groupFormed){
                 connectionStatus.setText("Client");
                 clientClass = new ClientClass(groupOwnerAddress);
@@ -319,6 +339,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void run(){
             try {
+                //On start initialize the server socket, and send public key to other device
                 serverSocket = new ServerSocket(8888);
                 socket = serverSocket.accept();
                 sendReceive = new SendReceive(socket);
@@ -338,6 +359,7 @@ public class MainActivity extends AppCompatActivity {
         public SendReceive(Socket skt){
             socket = skt;
             try{
+                //Initialize socket input and output stream threads
                 inputStream = socket.getInputStream();
                 outputStream = socket.getOutputStream();
             } catch (IOException e){
@@ -347,6 +369,7 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void run() {
+            //While socket is connected listen for data from input stream
             byte[] buffer = new byte[1024];
             int bytes;
 
@@ -354,6 +377,7 @@ public class MainActivity extends AppCompatActivity {
                 try {
                     bytes = inputStream.read(buffer);
                     if (bytes > 0) {
+                        //If new bytes in input stream add to buffer and indicate new message to message handler
                         handler.obtainMessage(MESSAGE_READ, bytes, -1,  buffer).sendToTarget();
                     }
                 } catch (IOException e) {
@@ -364,6 +388,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         public void write(byte[] bytes) {
+            //When called writes given bytes to output stream
             try {
                 outputStream.write(bytes);
             } catch (IOException e) {
@@ -381,6 +406,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void run() {
             try {
+                //On start connect to server socket on specified port, send over public key to connected device
                 socket.connect(new InetSocketAddress(hostAdd,8888),500);
                 sendReceive = new SendReceive(socket);
                 sendReceive.start();
@@ -390,6 +416,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
+        //Constructor for class
         public ClientClass(InetAddress hostAddress){
             hostAdd = hostAddress.getHostAddress();
             socket = new Socket();
@@ -398,73 +425,89 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    //Handler for modifying local chat history
     private void ChangeMessagesList(String msg){
+        //Increase message count
         messageArraySize++;
+        //allocate temp array of new size
         String[] tempArray = new String[messageArraySize];
+        //copy existing message array to temp array
         for (int i=0; i < messageArraySize-1; i++)
         {
             tempArray[i] = messageArray[i];
         }
+        //add new message to end of temp array
         tempArray[messageArraySize-1] = msg;
+        //allocate new messageArray and copy temp array back to it
         messageArray = new String[messageArraySize];
         for (int i=0; i < messageArraySize; i++)
         {
             messageArray[i] = tempArray[i];
         }
+        //Send changes to xml element
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(getApplicationContext(), R.layout.text_white_text, messageArray);
         read_msg_box.setAdapter(adapter);
+        //Scroll to bottom of chat list
         read_msg_box.setSelection(adapter.getCount() - 1);
     }
 
     private byte[] encryptData(byte[] data)
     {
+        //test logs to check data before encryption
         Log.d("test unencrypted bytes size", "bytesToSend size: " + data.length);
         Log.d("test unencrypted bytes", new String(data, 0));
-        try {
+        try { //Initialize cipher object to encryption mode using connected devices public key
             cipher.init(Cipher.ENCRYPT_MODE, connectedDevicePublicKey);
         } catch (InvalidKeyException e) {
             throw new RuntimeException(e);
         }
         byte[] bytesToSend;
-        try {
+        try { //Encrypt message
             bytesToSend = cipher.doFinal(data);
         } catch (BadPaddingException e) {
             throw new RuntimeException(e);
         } catch (IllegalBlockSizeException e) {
             throw new RuntimeException(e);
         }
+        //test logs to check data after encryption
         Log.d("test RSA bytes size", "bytesToSend size: " + bytesToSend.length);
         Log.d("test RSA bytes", new String(bytesToSend, 0));
+        //return encrypted bytes
         return bytesToSend;
     }
 
     private byte[] decryptData(byte[] bytesReceived)
     {
+        //Copy first 256 bytes from bytesReceived to temp array (bytes received is padded with 0's at end)
         byte[] temp = new byte[256];
         System.arraycopy(bytesReceived, 0, temp, 0, 256);
+        //Test logs of to check data before decryption
         Log.d("test RSA bytes size", "bytesReceived size: " + temp.length);
         Log.d("test RSA bytes", new String(temp, 0));
-        try {
+        try {//Set cipher object to decryption mode using devices private key
             cipher.init(Cipher.DECRYPT_MODE, privateKey);
 
         } catch (InvalidKeyException e) {
             throw new RuntimeException(e);
         }
         byte[] decrypted;
-        try {
+        try { //Decrypt data
             decrypted = cipher.doFinal(temp);
         } catch (BadPaddingException e) {
             throw new RuntimeException(e);
         } catch (IllegalBlockSizeException e) {
             throw new RuntimeException(e);
         }
+        //Test logs to check data after decryption
         Log.d("test unencrypted bytes size", "bytesToSend size: " + decrypted.length);
         Log.d("test unencrypted bytes", new String(decrypted, 0));
+        //return decrypted data
         return decrypted;
     }
 
     private void sendPublicKey()
     {
+        //Test logs to check public key bytes before sending
     //        if(publicKey == null)
     //        {
     //            Log.d("test public key", "publicKey is null");
@@ -473,11 +516,13 @@ public class MainActivity extends AppCompatActivity {
     //        {
     //            Log.d("test public key", "sendReceive is null");
     //        }
+        //Send the public key to message write handler
         sendReceive.write(publicKey.getEncoded());
     }
 
     private void receivePublicKey(byte[] bytes)
     {
+        //Sets local copy of connected devices public key
         String tempString = new String(bytes, 0);
         Log.d("test public key", tempString);
         try {
